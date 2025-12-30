@@ -1,0 +1,18 @@
+mkdir -p chain client server chain/crl
+
+mkdir -p root/{newcerts,certs,crl}
+mkdir -p serverCA/{newcerts,certs,crl}
+mkdir -p badCA/{newcerts,certs,crl}
+
+
+touch root/index.txt
+echo 01 > root/serial
+echo 01 > root/crlnumber
+
+touch serverCA/index.txt
+echo 01 > serverCA/serial
+echo 01 > serverCA/crlnumber
+
+touch badCA/index.txt
+echo 01 > badCA/serial
+echo 01 > badCA/crlnumber

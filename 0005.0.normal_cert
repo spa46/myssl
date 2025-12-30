@@ -1,0 +1,6 @@
+openssl req -new -config cnf/server.cnf -subj "/C=KR/ST=Seoul/L=Seoul/O=My Company/OU=IT Department/CN=valid.example.com" -key server/serverkey.pem -sha256 -out server/valid.csr
+openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -days 365 -notext -in server/valid.csr -out server/valid.pem
+
+cat server/valid.pem serverCA/serverCAcert.pem root/rootcert.pem > server/valid-chain.pem
+
+openssl verify -CAfile serverCA/ca-chain.pem server/valid.pem

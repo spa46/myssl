@@ -1,0 +1,6 @@
+openssl ecparam -name prime256v1 -genkey -noout -out root/rootkey.pem
+openssl ecparam -name prime256v1 -genkey -noout -out serverCA/serverCAkey.pem
+openssl ecparam -name prime256v1 -genkey -noout -out badCA/badCAkey.pem
+
+openssl ecparam -name prime256v1 -genkey -noout -out server/serverkey.pem
+openssl ecparam -name prime256v1 -genkey -noout -out client/clientkey.pem

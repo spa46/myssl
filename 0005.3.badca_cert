@@ -1,0 +1,9 @@
+openssl req -new -x509 -subj "/C=KR/ST=Seoul/O=Bad Company/CN=Bad CA" -key badCA/badCAkey.pem -sha256 -days 3650 -out badCA/badCAcert.pem
+openssl req -new -config cnf/server.cnf -subj "/C=KR/ST=Seoul/L=Seoul/O=My Company/OU=IT Department/CN=badca.example.com" -key server/serverkey.pem -sha256 -out server/badca.csr
+
+openssl x509 -req -sha256 -days 365 -in server/badca.csr -extfile cnf/server.cnf -extensions server_cert -CA badCA/badCAcert.pem -CAkey badCA/badCAkey.pem -CAcreateserial -out server/badca-cert.pem
+
+cat server/badca-cert.pem badCA/badCAcert.pem > server/badca-chain.pem
+
+openssl verify -CAfile serverCA/ca-chain.pem server/badca-cert.pem
+openssl verify -CAfile badCA/badCAcert.pem server/badca-cert.pem

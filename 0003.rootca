@@ -1,0 +1,4 @@
+openssl req -new -x509 -config cnf/root.cnf -key root/rootkey.pem -sha256 -days 3650 -out root/rootcert.pem
+
+openssl ca -gencrl -config cnf/root.cnf -out root/crl.pem
+openssl crl -in root/crl.pem -outform DER -out root/rootcrl.crl

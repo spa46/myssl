@@ -1,0 +1,12 @@
+openssl req -new -config cnf/serverCA.cnf -key serverCA/serverCAkey.pem -sha256 -out serverCA/serverCA.csr
+openssl ca -config cnf/root.cnf -extensions v3_intermediate_ca -md sha256 -days 1825 -notext -in serverCA/serverCA.csr -out serverCA/serverCAcert.pem
+
+openssl x509 -noout -text -in serverCA/serverCAcert.pem
+
+openssl ca -gencrl -config cnf/serverCA.cnf -out serverCA/crl.pem
+openssl crl -in serverCA/crl.pem -outform DER -out serverCA/crl.crl
+openssl crl -in serverCA/crl.pem -noout -text
+
+cat serverCA/serverCAcert.pem root/rootcert.pem > serverCA/ca-chain.pem
+
+cat root/index.txt
