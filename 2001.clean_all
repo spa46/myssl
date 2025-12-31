@@ -1,0 +1,17 @@
+#!/bin/bash
+# clean_all_script_simple.sh
+# Execute all numbered scripts from 1099 to 1000 in reverse order
+
+for i in {1099..1000}; do
+    num=$(printf "%04d" $i)
+    
+    # Find and execute any file matching the pattern
+    for file in ${num}.*; do
+        if [ -f "$file" ]; then
+            echo "[INFO] Executing: $file"
+            bash "$file" || echo "[ERROR] $file failed"
+            echo ""
+        fi
+    done
+done
+

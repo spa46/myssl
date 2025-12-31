@@ -1,3 +1,0 @@
-rm root/index.txt*
-rm serverCA/index.txt*
-rm badCA/index.txt*

@@ -55,6 +55,16 @@ def handle_client(conn, addr):
     finally:
         conn.close()
 def main():
+    # Check if required key file exists before starting
+    required_key = 'server/serverkey.pem'
+    if not os.path.exists(required_key):
+        print("=" * 60)
+        print(f"{ERROR} Required key file not found!")
+        print(f"        Missing: {required_key}")
+        print(f"        Cannot start server without this file.")
+        print("=" * 60)
+        return
+    
     # Validate certificate files on startup
     print("=" * 60)
     print("Validating certificate files...")
