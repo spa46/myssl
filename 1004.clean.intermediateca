@@ -1,0 +1,2 @@
+rm -f serverCA/newcerts/*.pem
+rm -f serverCA/{serverCAcert.pem,serverCA.csr,ca-chain.pem,crl.crl}

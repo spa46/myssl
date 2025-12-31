@@ -1,0 +1,2 @@
+rm -f badCA/badCAcert.pem
+rm -f server/{badca.csr,badca-cert.pem,badca-chain.pem}

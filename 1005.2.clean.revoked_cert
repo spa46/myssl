@@ -1,0 +1,2 @@
+rm -f server/{revoked.csr,revoked-cert.pem,revoked-chain.pem}
+rm -f serverCA/crl.pem

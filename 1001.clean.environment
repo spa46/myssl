@@ -1,0 +1,25 @@
+rm -f root/{index*,serial*,crlnumber*}
+rm -f badCA/{index*,serial*,crlnumber*}
+rm -f serverCA/{index*,serial*,crlnumber*}
+
+rmdir root/newcerts 2>/dev/null
+rmdir root/certs 2>/dev/null
+rmdir root/crl 2>/dev/null
+
+rmdir serverCA/newcerts 2>/dev/null
+rmdir serverCA/certs 2>/dev/null
+rmdir serverCA/crl 2>/dev/null
+
+rmdir badCA/newcerts 2>/dev/null
+rmdir badCA/cert 2>/dev/null
+rmdir badCA/crl 2>/dev/null
+
+rmdir chain/crl 2>/dev/null
+
+rmdir root 2>/dev/null
+rmdir serverCA 2>/dev/null
+rmdir badCA 2>/dev/null
+rmdir chain 2>/dev/null
+
+rmdir server 2>/dev/null
+rmdir client 2>/dev/null

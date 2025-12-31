@@ -1,0 +1,9 @@
+rm -f root/rootkey.pem
+rm -f serverCA/serverCAkey.pem
+rm -f badCA/badCAkey.pem
+
+rm -f server/serverkey.pem
+rm -f client/clientkey.pem
+
+rm -f root/newcerts/*.pem
+

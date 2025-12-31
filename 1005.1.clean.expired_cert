@@ -1,0 +1,1 @@
+rm -f server/{expired.csr,expired-cert.pem,expired-chain.pem}

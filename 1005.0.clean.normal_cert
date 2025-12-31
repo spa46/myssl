@@ -1,0 +1,1 @@
+rm server/{valid.csr,valid.pem,valid-chain.pem}

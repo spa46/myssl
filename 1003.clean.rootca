@@ -1,0 +1,1 @@
+rm -f root/{rootcrl.crl,crl.pem,crl.crl,rootcert.pem}
