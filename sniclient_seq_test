@@ -1,0 +1,15 @@
+# 1. normal test
+openssl s_client -connect localhost:4443 -servername valid.example.com -CAfile serverCA/ca-chain.pem
+
+# 3. expired
+openssl s_client -connect localhost:4443 -servername expired.example.com -CAfile serverCA/ca-chain.pem
+
+# 4. revoked certificate
+#### crl_check 없이는 무의미한 테스트
+#### openssl s_client -connect localhost:4443 -servername revoked.example.com -CAfile serverCA/ca-chain.pem
+openssl s_client -connect localhost:4443 -servername revoked.example.com -CAfile serverCA/ca-chain.pem -CRLfile serverCA/crl.pem -crl_check
+
+
+
+
+openssl s_client -connect localhost:4443 -servername selfsigned.example.com -CAfile serverCA/ca-chain.pem
