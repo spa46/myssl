@@ -25,14 +25,53 @@ TERMINAL_WIDTH = 80
 def get_test_name(filepath):
     """Convert test filename to display name"""
     basename = os.path.basename(filepath)
-    # Remove 'test_' prefix and '.sh' suffix
-    name = basename.replace('test_', '').replace('.sh', '')
+    # Remove 'test_' prefix
+    name = basename.replace('test_', '')
     # Convert _ to space and uppercase
     name = name.replace('_', ' ').upper()
     return f"#TEST {name}"
 
 
-def run_test(test_file):
+def extract_commands(test_file):
+    """Extract openssl commands from test file"""
+    commands = []
+    try:
+        with open(test_file, 'r') as f:
+            content = f.read()
+            lines = content.split('\n')
+            
+            i = 0
+            while i < len(lines):
+                line = lines[i].strip()
+                # Look for openssl commands
+                if 'openssl' in line:
+                    cmd_parts = [line]
+                    # Check for line continuations
+                    while i < len(lines) - 1 and lines[i].rstrip().endswith('\\'):
+                        i += 1
+                        continuation = lines[i].strip()
+                        if continuation and not continuation.startswith('#'):
+                            cmd_parts.append(continuation)
+                    
+                    # Join and clean up the command
+                    full_cmd = ' '.join(cmd_parts)
+                    # Remove cmd=$( and trailing )
+                    full_cmd = full_cmd.replace('cmd=$(', '').replace('<<< "Q" 2>&1)', '').rstrip(')')
+                    # Remove backslashes and extra spaces
+                    full_cmd = full_cmd.replace('\\', '').strip()
+                    # Normalize spaces
+                    full_cmd = ' '.join(full_cmd.split())
+                    
+                    if full_cmd:
+                        commands.append(full_cmd)
+                i += 1
+    except Exception:
+        pass
+    
+    return commands
+
+
+def run_test(test_file, detail=False, show_commands=False):
     """Run a single test file and return result"""
     test_name = get_test_name(test_file)
     
@@ -49,28 +88,40 @@ def run_test(test_file):
         if result.returncode == 0:
             # PASS
             print(f"{test_name:<{TERMINAL_WIDTH-6}}{GREEN}[PASS]{NC}")
+            if show_commands:
+                commands = extract_commands(test_file)
+                for cmd in commands:
+                    print(f"    {cmd}", end='\n\n')
+            if detail and result.stdout:
+                for line in result.stdout.strip().split('\n'):
+                    if line.strip():
+                        print(f"    {line}")
             return True
         else:
             # FAIL
             print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+            if show_commands:
+                commands = extract_commands(test_file)
+                for cmd in commands:
+                    print(f"    {cmd}")
             # Print failure details with indent
             if result.stdout:
                 for line in result.stdout.strip().split('\n'):
                     if line.strip():
-                        print(f"  {line}")
+                        print(f"    {line}")
             if result.stderr:
                 for line in result.stderr.strip().split('\n'):
                     if line.strip():
-                        print(f"  {line}")
+                        print(f"    {line}")
             return False
             
     except subprocess.TimeoutExpired:
         print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
-        print(f"  Description: Test timeout (30s)")
+        print(f"    Description: Test timeout (30s)")
         return False
     except Exception as e:
         print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
-        print(f"  Description: {str(e)}")
+        print(f"    Description: {str(e)}")
         return False
 
 
@@ -79,8 +130,10 @@ def find_all_tests(directory=None):
     if directory is None:
         # Use the script's directory if not specified
         directory = os.path.dirname(os.path.abspath(__file__))
-    pattern = os.path.join(directory, 'test_*.sh')
+    pattern = os.path.join(directory, 'test_*')
     tests = glob.glob(pattern)
+    # Filter out directories and only keep files
+    tests = [t for t in tests if os.path.isfile(t)]
     # Sort alphanumerically
     tests.sort()
     return tests
@@ -89,13 +142,24 @@ def find_all_tests(directory=None):
 def main():
     """Main test runner"""
     # Parse arguments
-    if len(sys.argv) > 1:
+    detail = False
+    show_commands = False
+    test_file_arg = None
+    
+    for arg in sys.argv[1:]:
+        if arg == '--detail':
+            detail = True
+        elif arg == '--within-commands':
+            show_commands = True
+        else:
+            test_file_arg = arg
+    
+    if test_file_arg:
         # Run specific test
-        test_file = sys.argv[1]
-        if not os.path.exists(test_file):
-            print(f"{RED}Error: Test file '{test_file}' not found{NC}")
+        if not os.path.exists(test_file_arg):
+            print(f"{RED}Error: Test file '{test_file_arg}' not found{NC}")
             sys.exit(1)
-        tests = [test_file]
+        tests = [test_file_arg]
     else:
         # Run all tests
         tests = find_all_tests()
@@ -106,12 +170,16 @@ def main():
     # Print header
     print(f"\n{BLUE}{'='*TERMINAL_WIDTH}{NC}")
     print(f"{BLUE}Running {len(tests)} test(s){NC}")
+    if detail:
+        print(f"{BLUE}Detail mode: ON{NC}")
+    if show_commands:
+        print(f"{BLUE}Show commands: ON{NC}")
     print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
     
     # Run tests
     results = []
     for test in tests:
-        passed = run_test(test)
+        passed = run_test(test, detail=detail, show_commands=show_commands)
         results.append((test, passed))
         print()  # Empty line between tests
     
