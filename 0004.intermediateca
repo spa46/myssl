@@ -1,5 +1,5 @@
 openssl req -new -config cnf/serverCA.cnf -key serverCA/serverCAkey.pem -sha256 -out serverCA/serverCA.csr
-openssl ca -config cnf/root.cnf -extensions v3_intermediate_ca -md sha256 -days 1825 -notext -in serverCA/serverCA.csr -out serverCA/serverCAcert.pem
+openssl ca -config cnf/root.cnf -extensions v3_intermediate_ca -md sha256 -days 1825 -notext -batch -in serverCA/serverCA.csr -out serverCA/serverCAcert.pem
 
 openssl x509 -noout -text -in serverCA/serverCAcert.pem
 

@@ -1,5 +1,5 @@
 openssl req -new -config cnf/server.cnf -subj "/C=KR/ST=Seoul/L=Seoul/O=My Company/OU=IT Department/CN=revoked.example.com" -key server/serverkey.pem -sha256 -out server/revoked.csr
-openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -days 365 -notext -in server/revoked.csr -out server/revoked-cert.pem
+openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -days 365 -notext -batch -in server/revoked.csr -out server/revoked-cert.pem
 
 openssl ca -config cnf/serverCA.cnf -revoke server/revoked-cert.pem -crl_reason keyCompromise
 
