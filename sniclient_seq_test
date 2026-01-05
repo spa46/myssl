@@ -7,7 +7,7 @@ openssl s_client -connect localhost:4443 -servername expired.example.com -CAfile
 # 4. revoked certificate
 #### crl_check 없이는 무의미한 테스트
 #### openssl s_client -connect localhost:4443 -servername revoked.example.com -CAfile serverCA/ca-chain.pem
-openssl s_client -connect localhost:4443 -servername revoked.example.com -CAfile serverCA/ca-chain.pem -CRLfile serverCA/crl.pem -crl_check
+openssl s_client -connect localhost:4443 -servername revoked.example.com -CAfile serverCA/ca-chain.pem -crl_check
 
 
 

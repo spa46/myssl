@@ -7,4 +7,4 @@ openssl ca -gencrl -config cnf/serverCA.cnf -out serverCA/crl.pem
 
 cat server/revoked-cert.pem serverCA/serverCAcert.pem root/rootcert.pem > server/revoked-chain.pem
 
-openssl verify -crl_check -CAfile serverCA/ca-chain.pem -CRLfile serverCA/crl.pem server/revoked-cert.pem
+openssl verify -crl_check -CAfile serverCA/ca-chain-with-crl.pem -CRLfile serverCA/crl.pem server/revoked-cert.pem

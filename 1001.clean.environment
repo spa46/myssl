@@ -11,7 +11,7 @@ rmdir serverCA/certs 2>/dev/null
 rmdir serverCA/crl 2>/dev/null
 
 rmdir badCA/newcerts 2>/dev/null
-rmdir badCA/cert 2>/dev/null
+rmdir badCA/certs 2>/dev/null
 rmdir badCA/crl 2>/dev/null
 
 rmdir chain/crl 2>/dev/null

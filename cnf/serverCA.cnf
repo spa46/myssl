@@ -71,6 +71,7 @@ authorityKeyIdentifier = keyid,issuer:always
 keyUsage = critical, digitalSignature, keyEncipherment
 extendedKeyUsage = serverAuth
 crlDistributionPoints = URI:http://crl.example.com/serverca.crl
+authorityInfoAccess = OCSP;URI:http://ocsp.example.com
 
 [ crl_ext ]
 authorityKeyIdentifier=keyid:always

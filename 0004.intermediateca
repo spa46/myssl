@@ -8,5 +8,13 @@ openssl crl -in serverCA/crl.pem -outform DER -out serverCA/crl.crl
 openssl crl -in serverCA/crl.pem -noout -text
 
 cat serverCA/serverCAcert.pem root/rootcert.pem > serverCA/ca-chain.pem
+cp serverCA/ca-chain.pem test/ 
+#cat serverCA/serverCAcert.pem root/rootcert.pem serverCA/crl.pem > serverCA/ca-chain-with-crl.pem
 
 cat root/index.txt
+
+
+mkdir -p crl
+cp serverCA/crl.pem crl/
+SERVERCA_HASH=$(openssl x509 -in serverCA/serverCAcert.pem -hash -noout)
+ln -sf crl.pem crl/${SERVERCA_HASH}.r0

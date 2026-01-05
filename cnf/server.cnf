@@ -52,6 +52,6 @@ subjectAltName = @alt_names
 crlDistributionPoints = URI:http://crl.example.com/serverca.crl
 authorityInfoAccess = OCSP;URI:http://ocsp.example.com
 
-[ alt_names ]
-DNS.1 = valid.example.com
-DNS.2 = www.valid.example.com
+#[ alt_names ]
+#DNS.1 = valid.example.com
+#DNS.2 = www.valid.example.com
