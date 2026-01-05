@@ -20,6 +20,9 @@ rmdir root 2>/dev/null
 rmdir serverCA 2>/dev/null
 rmdir badCA 2>/dev/null
 rmdir chain 2>/dev/null
+rmdir crl 2>/dev/null
 
 rmdir server 2>/dev/null
 rmdir client 2>/dev/null
+
+echo ''

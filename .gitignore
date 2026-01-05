@@ -4,6 +4,9 @@ serverCA
 badCA
 client
 chain
+crl
+test/crl
 
 **/*.org
 **/*.pem
+

@@ -1,0 +1,106 @@
+#!/bin/bash
+# run_all_tests.sh
+# Execute all test scripts from test_00 to test_99
+
+# Error code descriptions (based on X509 verification error codes)
+declare -A ERROR_CODES=(
+    [0]="Success"
+    [2]="Unable to get issuer certificate"
+    [3]="Unable to get certificate CRL"
+    [4]="The certificate signature could not be decrypted"
+    [5]="The CRL signature could not be decrypted"
+    [6]="Unable to decode issuer public key"
+    [7]="Certificate signature failure"
+    [8]="CRL signature failure"
+    [9]="Certificate is not yet valid"
+    [10]="Certificate has expired"
+    [11]="CRL is not yet valid"
+    [12]="CRL has expired"
+    [13]="Format error - certificate notBefore field contains an invalid time"
+    [14]="Format error - certificate notAfter field contains an invalid time"
+    [15]="Format error - CRL lastUpdate field contains an invalid time"
+    [16]="Format error - CRL nextUpdate field contains an invalid time"
+    [17]="An error occurred trying to allocate memory"
+    [18]="Certificate is self signed and cannot be found in trusted certificates"
+    [19]="Root certificate could not be found locally"
+    [20]="Issuer certificate could not be found"
+    [21]="No signatures could be verified - chain contains only one certificate and it is not self signed"
+    [22]="Certificate chain too long"
+    [23]="The certificate has been revoked"
+    [24]="Invalid CA certificate"
+    [25]="Path length constraint exceeded"
+    [26]="Unsupported certificate"
+    [27]="Certificate not trusted"
+    [28]="Certificate rejected"
+    [29]="Subject issuer mismatch"
+    [30]="Authority and subject key identifier mismatch"
+    [31]="Authority and issuer serial number mismatch"
+    [32]="Key usage does not include certificate signing"
+    [50]="Application verification failure"
+    [52]="Get client certificate failed"
+    [53]="Protocol error"
+    [99]="Test configuration error"
+    [255]="Connection refused - Server not running"
+)
+
+echo "=========================================="
+echo "TLS Test Suite Runner"
+echo "=========================================="
+echo ""
+
+PASSED=0
+FAILED=0
+SKIPPED=0
+
+for i in {0..99}; do
+    # Format number with leading zeros
+    NUM=$(printf "%02d" $i)
+    
+    # Find matching test file (with or without .sh extension)
+    FOUND=$(ls test_${NUM}_* 2>/dev/null | grep -E "test_${NUM}_[^/]*$" | head -1)
+    
+    if [ -n "$FOUND" ]; then
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        echo "Running: $FOUND"
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+        
+        # Run the test and capture output
+        OUTPUT=$(bash "$FOUND" 2>&1)
+        TEST_EXIT=$?
+        
+        # Display test output
+        echo "$OUTPUT"
+        
+        echo ""
+        
+        # Count pass/fail based on exit code
+        if [ $TEST_EXIT -eq 0 ]; then
+            echo "✓ PASSED: $FOUND"
+            ((PASSED++))
+        else
+            ERROR_DESC="${ERROR_CODES[$TEST_EXIT]:-Unknown error code: $TEST_EXIT}"
+            echo "✗ FAILED: $FOUND"
+            echo "  Error Code: $TEST_EXIT - $ERROR_DESC"
+            ((FAILED++))
+        fi
+        
+        echo ""
+    fi
+done
+
+echo "=========================================="
+echo "Test Summary"
+echo "=========================================="
+echo "Total Passed:  $PASSED"
+echo "Total Failed:  $FAILED"
+echo "Total Skipped: $SKIPPED"
+echo "=========================================="
+
+if [ $FAILED -eq 0 ]; then
+    echo "✓ All tests passed!"
+    exit 0
+else
+    echo "✗ Some tests failed"
+    exit 1
+fi
+

@@ -1,1 +1,1 @@
-rm server/{valid.csr,valid.pem,valid-chain.pem}
+rm -f server/{valid.csr,valid.pem,valid-chain.pem}

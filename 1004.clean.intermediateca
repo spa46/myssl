@@ -1,4 +1,5 @@
 rm -f serverCA/newcerts/*.pem
 rm -f serverCA/{*.pem,serverCA.csr,crl.crl}
+rm -f crl/{*.pem,.r0,*.r0}
 
 rm -f test/ca-chain.pem test/bad-chain.pem

@@ -1,19 +1,13 @@
 #!/usr/bin/env python3
 """
 Test runner for TLS certificate tests
-Usage:
-    python tls                          # Run all tests
-    python tls test_02_complete_chain   # Run specific test
-    python tls --list                   # List all available tests
-    python tls --detail                 # Run all tests with detailed output
-    python tls --within-commands        # Show commands executed in tests
-    python tls --help                   # Show help message
 """
 
 import os
 import sys
 import subprocess
 import glob
+import argparse
 from pathlib import Path
 
 # Colors
@@ -163,44 +157,48 @@ def list_tests():
     print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
 
 
-def show_help():
-    """Display help message"""
-    help_text = f"""
-{BLUE}{'='*TERMINAL_WIDTH}{NC}
-{BLUE}TLS Certificate Test Runner - Help{NC}
-{BLUE}{'='*TERMINAL_WIDTH}{NC}
-
-{YELLOW}USAGE:{NC}
-    python tls [OPTIONS] [TEST_FILE]
-
-{YELLOW}OPTIONS:{NC}
-    --list              List all available test files
-    --help              Show this help message
-    --detail            Show detailed output from test execution
-    --within-commands   Show the commands executed within each test
-
-{YELLOW}EXAMPLES:{NC}
-    python tls
-        Run all tests with summary output
-
-    python tls --list
-        List all available tests
-
-    python tls test_02_complete_chain
-        Run a specific test file
-
-    python tls --detail
-        Run all tests and show detailed output
-
-    python tls --within-commands
-        Run all tests and show the commands being executed
-
-    python tls test_02_complete_chain --within-commands --detail
-        Run specific test with commands and detailed output
-
-{BLUE}{'='*TERMINAL_WIDTH}{NC}
-"""
-    print(help_text)
+def create_parser():
+    """Create and configure argument parser"""
+    parser = argparse.ArgumentParser(
+        description='TLS Certificate Test Runner',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=f'''
+{YELLOW}Examples:{NC}
+  python tls                                    Run all tests
+  python tls --list                             List all available tests
+  python tls test_02_complete_chain             Run a specific test
+  python tls --detail                           Run all tests with detailed output
+  python tls --within-commands                  Show commands executed in tests
+  python tls test_02_complete_chain --detail --within-commands
+                                                Run specific test with all options
+        '''
+    )
+    
+    parser.add_argument(
+        'test_file',
+        nargs='?',
+        help='Specific test file to run (optional)'
+    )
+    
+    parser.add_argument(
+        '--list',
+        action='store_true',
+        help='List all available test files and exit'
+    )
+    
+    parser.add_argument(
+        '--detail',
+        action='store_true',
+        help='Show detailed output from test execution'
+    )
+    
+    parser.add_argument(
+        '--within-commands',
+        action='store_true',
+        help='Show the commands executed within each test'
+    )
+    
+    return parser
 
 
 
@@ -208,34 +206,22 @@ def show_help():
 
 def main():
     """Main test runner"""
-    # Check for special flags first
-    if '--help' in sys.argv[1:]:
-        show_help()
-        sys.exit(0)
+    # Parse arguments
+    parser = create_parser()
+    args = parser.parse_args()
     
-    if '--list' in sys.argv[1:]:
+    # Handle --list flag
+    if args.list:
         list_tests()
         sys.exit(0)
     
-    # Parse arguments
-    detail = False
-    show_commands = False
-    test_file_arg = None
-    
-    for arg in sys.argv[1:]:
-        if arg == '--detail':
-            detail = True
-        elif arg == '--within-commands':
-            show_commands = True
-        else:
-            test_file_arg = arg
-    
-    if test_file_arg:
+    # Determine which tests to run
+    if args.test_file:
         # Run specific test
-        if not os.path.exists(test_file_arg):
-            print(f"{RED}Error: Test file '{test_file_arg}' not found{NC}")
+        if not os.path.exists(args.test_file):
+            print(f"{RED}Error: Test file '{args.test_file}' not found{NC}")
             sys.exit(1)
-        tests = [test_file_arg]
+        tests = [args.test_file]
     else:
         # Run all tests
         tests = find_all_tests()
@@ -246,16 +232,16 @@ def main():
     # Print header
     print(f"\n{BLUE}{'='*TERMINAL_WIDTH}{NC}")
     print(f"{BLUE}Running {len(tests)} test(s){NC}")
-    if detail:
+    if args.detail:
         print(f"{BLUE}Detail mode: ON{NC}")
-    if show_commands:
+    if args.within_commands:
         print(f"{BLUE}Show commands: ON{NC}")
     print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
     
     # Run tests
     results = []
     for test in tests:
-        passed = run_test(test, detail=detail, show_commands=show_commands)
+        passed = run_test(test, detail=args.detail, show_commands=args.within_commands)
         results.append((test, passed))
         print()  # Empty line between tests
     
@@ -264,11 +250,11 @@ def main():
     passed_count = sum(1 for _, passed in results if passed)
     failed_count = len(results) - passed_count
     
-    print(f"{BLUE}Test Summary: (Total: {len(results)})")
-    print(f"  {GREEN}Passed: {passed_count}{NC}")
-    print(f"  {RED}Failed: {failed_count}{NC}")
+    print(f"{BLUE}Test Summary")
+    print(f"    {GREEN}Passed: {passed_count}{NC}")
+    print(f"    {RED}Failed: {failed_count}{NC}")
     print(f"-------------")
-    print(f"  Total:  {len(results)}")
+    print(f"    Total:  {len(results)} Test Cases")
     print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
     
     # Exit with error if any test failed
