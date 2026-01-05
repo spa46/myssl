@@ -1,6 +1,8 @@
 openssl req -new -config cnf/server.cnf -subj "/C=KR/ST=Seoul/L=Seoul/O=My Company/OU=IT Department/CN=expired.example.com" -key server/serverkey.pem -sha256 -out server/expired.csr
 
-openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -days 0 -notext -batch -in server/expired.csr -out server/expired-cert.pem
+# openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -days 1 -notext -batch -in server/expired.csr -out server/expired-cert.pem
+ faketime '2026-01-03' openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -days 1 -notext -batch -in server/expired.csr -out server/expired-cert.pem
+
 # openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -startdate 20230101000000Z -enddate 20230102000000Z -notext -in server/expired.csr -out server/expired-cert.pem
 # faketime '2026-01-02' openssl verify -CAfile serverCA/ca-chain.pem server/expired-cert.pem
 # openssl ca -config cnf/serverCA.cnf -extensions server_cert -md sha256 -startdate 20230101000000Z -enddate 20230102000000Z -notext -in server/expired.csr -out server/expired-cert.pem

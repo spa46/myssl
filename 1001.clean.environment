@@ -15,6 +15,7 @@ rmdir badCA/certs 2>/dev/null
 rmdir badCA/crl 2>/dev/null
 
 rmdir chain/crl 2>/dev/null
+rmdir test/crl 2>/dev/null
 
 rmdir root 2>/dev/null
 rmdir serverCA 2>/dev/null
