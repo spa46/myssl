@@ -2,8 +2,12 @@
 """
 Test runner for TLS certificate tests
 Usage:
-    python run_tests.py                 # Run all tests
-    python run_tests.py test_04_revoked_crl.sh  # Run specific test
+    python tls                          # Run all tests
+    python tls test_02_complete_chain   # Run specific test
+    python tls --list                   # List all available tests
+    python tls --detail                 # Run all tests with detailed output
+    python tls --within-commands        # Show commands executed in tests
+    python tls --help                   # Show help message
 """
 
 import os
@@ -139,8 +143,80 @@ def find_all_tests(directory=None):
     return tests
 
 
+def list_tests():
+    """List all available test files"""
+    tests = find_all_tests()
+    if not tests:
+        print(f"{YELLOW}No test files found{NC}")
+        return
+    
+    print(f"\n{BLUE}{'='*TERMINAL_WIDTH}{NC}")
+    print(f"{BLUE}Available Tests ({len(tests)} total){NC}")
+    print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
+    
+    for i, test in enumerate(tests, 1):
+        basename = os.path.basename(test)
+        test_name = get_test_name(test)
+        print(f"  {i}. {basename}")
+        print(f"     {test_name}\n")
+    
+    print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
+
+
+def show_help():
+    """Display help message"""
+    help_text = f"""
+{BLUE}{'='*TERMINAL_WIDTH}{NC}
+{BLUE}TLS Certificate Test Runner - Help{NC}
+{BLUE}{'='*TERMINAL_WIDTH}{NC}
+
+{YELLOW}USAGE:{NC}
+    python tls [OPTIONS] [TEST_FILE]
+
+{YELLOW}OPTIONS:{NC}
+    --list              List all available test files
+    --help              Show this help message
+    --detail            Show detailed output from test execution
+    --within-commands   Show the commands executed within each test
+
+{YELLOW}EXAMPLES:{NC}
+    python tls
+        Run all tests with summary output
+
+    python tls --list
+        List all available tests
+
+    python tls test_02_complete_chain
+        Run a specific test file
+
+    python tls --detail
+        Run all tests and show detailed output
+
+    python tls --within-commands
+        Run all tests and show the commands being executed
+
+    python tls test_02_complete_chain --within-commands --detail
+        Run specific test with commands and detailed output
+
+{BLUE}{'='*TERMINAL_WIDTH}{NC}
+"""
+    print(help_text)
+
+
+
+
+
 def main():
     """Main test runner"""
+    # Check for special flags first
+    if '--help' in sys.argv[1:]:
+        show_help()
+        sys.exit(0)
+    
+    if '--list' in sys.argv[1:]:
+        list_tests()
+        sys.exit(0)
+    
     # Parse arguments
     detail = False
     show_commands = False
