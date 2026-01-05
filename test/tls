@@ -1,0 +1,135 @@
+#!/usr/bin/env python3
+"""
+Test runner for TLS certificate tests
+Usage:
+    python run_tests.py                 # Run all tests
+    python run_tests.py test_04_revoked_crl.sh  # Run specific test
+"""
+
+import os
+import sys
+import subprocess
+import glob
+from pathlib import Path
+
+# Colors
+GREEN = '\033[0;32m'
+RED = '\033[0;31m'
+YELLOW = '\033[1;33m'
+BLUE = '\033[1;36m'  # Bright Cyan
+NC = '\033[0m'  # No Color
+
+TERMINAL_WIDTH = 80
+
+
+def get_test_name(filepath):
+    """Convert test filename to display name"""
+    basename = os.path.basename(filepath)
+    # Remove 'test_' prefix and '.sh' suffix
+    name = basename.replace('test_', '').replace('.sh', '')
+    # Convert _ to space and uppercase
+    name = name.replace('_', ' ').upper()
+    return f"#TEST {name}"
+
+
+def run_test(test_file):
+    """Run a single test file and return result"""
+    test_name = get_test_name(test_file)
+    
+    try:
+        # Run the test script
+        result = subprocess.run(
+            ['bash', test_file],
+            capture_output=True,
+            text=True,
+            timeout=30
+        )
+        
+        # Check if test passed (exit code 0)
+        if result.returncode == 0:
+            # PASS
+            print(f"{test_name:<{TERMINAL_WIDTH-6}}{GREEN}[PASS]{NC}")
+            return True
+        else:
+            # FAIL
+            print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+            # Print failure details with indent
+            if result.stdout:
+                for line in result.stdout.strip().split('\n'):
+                    if line.strip():
+                        print(f"  {line}")
+            if result.stderr:
+                for line in result.stderr.strip().split('\n'):
+                    if line.strip():
+                        print(f"  {line}")
+            return False
+            
+    except subprocess.TimeoutExpired:
+        print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+        print(f"  Description: Test timeout (30s)")
+        return False
+    except Exception as e:
+        print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+        print(f"  Description: {str(e)}")
+        return False
+
+
+def find_all_tests(directory=None):
+    """Find all test files in directory"""
+    if directory is None:
+        # Use the script's directory if not specified
+        directory = os.path.dirname(os.path.abspath(__file__))
+    pattern = os.path.join(directory, 'test_*.sh')
+    tests = glob.glob(pattern)
+    # Sort alphanumerically
+    tests.sort()
+    return tests
+
+
+def main():
+    """Main test runner"""
+    # Parse arguments
+    if len(sys.argv) > 1:
+        # Run specific test
+        test_file = sys.argv[1]
+        if not os.path.exists(test_file):
+            print(f"{RED}Error: Test file '{test_file}' not found{NC}")
+            sys.exit(1)
+        tests = [test_file]
+    else:
+        # Run all tests
+        tests = find_all_tests()
+        if not tests:
+            print(f"{YELLOW}No test files found{NC}")
+            sys.exit(0)
+    
+    # Print header
+    print(f"\n{BLUE}{'='*TERMINAL_WIDTH}{NC}")
+    print(f"{BLUE}Running {len(tests)} test(s){NC}")
+    print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
+    
+    # Run tests
+    results = []
+    for test in tests:
+        passed = run_test(test)
+        results.append((test, passed))
+        print()  # Empty line between tests
+    
+    # Print summary
+    print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}")
+    passed_count = sum(1 for _, passed in results if passed)
+    failed_count = len(results) - passed_count
+    
+    print(f"{BLUE}Test Summary: (Total: {len(results)})")
+    print(f"  {GREEN}Passed: {passed_count}{NC}")
+    print(f"  {RED}Failed: {failed_count}{NC}")
+    print(f"-------------")
+    print(f"  Total:  {len(results)}")
+    print(f"{BLUE}{'='*TERMINAL_WIDTH}{NC}\n")
+    
+    # Exit with error if any test failed
+    sys.exit(0 if failed_count == 0 else 1)
+
+
+if __name__ == '__main__':
+    main()

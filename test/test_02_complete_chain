@@ -1,0 +1,36 @@
+#!/bin/bash
+# test_chain_validation.sh
+# Complete Certificate Chain Validation Test
+
+echo "Complete Certificate Chain Validation Test"
+echo "==========================================="
+echo ""
+
+# Test with full chain validation
+echo "1. Testing full chain validation..."
+cmd=$(openssl s_client -connect localhost:4443 \
+  -servername valid.example.com \
+  -CAfile ca-chain.pem \
+  -showcerts \
+  -verify_return_error \
+  <<< "Q" 2>&1)
+
+EXIT_CODE=$?
+
+# Extract verification result
+echo "$cmd" | grep -E "depth=|verify return:|Verification:"
+echo ""
+
+# Show certificate chain
+echo "2. Certificate chain details:"
+echo "$cmd" | grep -E "depth=|CN =|issuer="
+echo ""
+
+# Verify result
+if [ $EXIT_CODE -eq 0 ]; then
+  echo "✓ Chain validation: SUCCESS"
+else
+  echo "✗ Chain validation: FAILED"
+fi
+
+exit $EXIT_CODE

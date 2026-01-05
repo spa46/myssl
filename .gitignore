@@ -6,3 +6,4 @@ client
 chain
 
 **/*.org
+**/*.pem
