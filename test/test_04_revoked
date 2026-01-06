@@ -1,6 +1,6 @@
 #!/bin/bash
 # test_04_revoked - Revoked Certificate with CRL Check
-# Expected: error code 23 (The certificate has been revoked)
+# Expected: error code 3 (The certificate has been revoked)
 
 openssl s_client -connect localhost:4443 \
   -servername revoked.example.com \
