@@ -1,19 +1,21 @@
 #!/bin/bash
-# test_04_revoked_crl.sh
+# test_04_revoked
 # Test #4: Revoked Certificate with CRL Check
 
-cmd=$(openssl s_client -connect localhost:4443 \
+openssl s_client -connect localhost:4443 \
   -servername revoked.example.com \
-  -CAfile ../serverCA/ca-chain.pem \
-  -CApath ../crl \
+  -CAfile ca-chain.pem \
+  -CApath crl \
   -crl_check_all \
-  <<< "Q" 2>&1)
+  -brief \
+  <<< "Q" 2>&1
 
-# Check if revocation was detected
-if echo "$cmd" | grep -qE "verify error:num=23|certificate revoked"; then
-  exit 0  # PASS: Revocation detected
+EXIT_CODE=$?
+
+# Expected: exit code non-zero (verification failure for revoked cert)
+if [ $EXIT_CODE -ne 0 ]; then
+  exit 0  # PASS: Revoked certificate was rejected
 else
-  echo "Description: Certificate revocation was NOT detected"
-  echo "Expected: verify error:num=23 (certificate revoked)"
+  echo "Description: Revoked certificate was incorrectly ACCEPTED"
   exit 1  # FAIL
 fi

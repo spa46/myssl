@@ -10,6 +10,7 @@ cmd=$(openssl s_client -connect localhost:4443 \
   -servername expired.example.com \
   -CAfile ca-chain.pem \
   -verify_return_error \
+  -brief \
   <<< "Q" 2>&1)
 
 EXIT_CODE=$?
@@ -33,7 +34,7 @@ else
     echo "No error code found in output"
   fi
   echo "Exit code: $EXIT_CODE"
-  echo "$cmd" | grep -E "verify error|Verification|subject=|issuer="
+  echo "$cmd" | grep -E "verify error|Verification|Connection"
   exit 1  # FAIL
 fi
 
