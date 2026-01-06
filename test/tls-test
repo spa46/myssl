@@ -51,6 +51,25 @@ def get_test_name(filepath):
     return f"#TEST {name}"
 
 
+def get_test_description(test_file):
+    """Extract test description from test file comment"""
+    try:
+        with open(test_file, 'r') as f:
+            lines = f.readlines()
+            if len(lines) >= 2:
+                # Look for the second line which has format: # test_name - Description
+                second_line = lines[1].strip()
+                if second_line.startswith('#'):
+                    # Extract description after the dash
+                    if ' - ' in second_line:
+                        parts = second_line.split(' - ', 1)
+                        if len(parts) == 2:
+                            return parts[1].strip()
+    except Exception:
+        pass
+    return None
+
+
 def extract_commands(test_file):
     """Extract openssl commands from test file"""
     commands = []
@@ -131,7 +150,14 @@ def extract_error_codes(output):
 def run_test(test_file, detail=False, show_commands=False):
     """Run a single test file and return result"""
     test_name = get_test_name(test_file)
+    test_desc = get_test_description(test_file)
     expected_error = get_expected_error_code(test_file)
+    
+    # Format test name with description
+    if test_desc:
+        display_name = f"{test_name} - {test_desc}"
+    else:
+        display_name = test_name
     
     try:
         # Run the test script
@@ -172,7 +198,7 @@ def run_test(test_file, detail=False, show_commands=False):
         # Print result
         if test_passed:
             # PASS
-            print(f"{test_name:<{TERMINAL_WIDTH-6}}{GREEN}[PASS]{NC}")
+            print(f"{display_name:<{TERMINAL_WIDTH-6}}{GREEN}[PASS]{NC}")
             if show_commands:
                 commands = extract_commands(test_file)
                 for cmd in commands:
@@ -200,7 +226,7 @@ def run_test(test_file, detail=False, show_commands=False):
             return True
         else:
             # FAIL
-            print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+            print(f"{display_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
             if show_commands:
                 commands = extract_commands(test_file)
                 for cmd in commands:
@@ -241,11 +267,11 @@ def run_test(test_file, detail=False, show_commands=False):
             return False
         
     except subprocess.TimeoutExpired:
-        print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+        print(f"{display_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
         print(f"    Description: Test timeout (30s)")
         return False
     except Exception as e:
-        print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
+        print(f"{display_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
         print(f"    Description: {str(e)}")
         return False
 
