@@ -1,21 +1,11 @@
 #!/bin/bash
-# test_01_valid
-# Test #1: Valid Certificate
+# test_01_valid - Valid Certificate
+# Expected: error code 0 (Success)
 
 openssl s_client -connect localhost:4443 \
   -servername valid.example.com \
-  -CAfile ../serverCA/ca-chain.pem \
+  -CAfile ca-chain.pem \
   -verify_return_error \
   -brief \
   <<< "Q" 2>&1
-
-EXIT_CODE=$?
-
-# Expected: exit code 0 (verification success)
-if [ $EXIT_CODE -eq 0 ]; then
-  exit 0  # PASS
-else
-  echo "Description: Valid certificate was NOT accepted"
-  exit 1  # FAIL
-fi
 

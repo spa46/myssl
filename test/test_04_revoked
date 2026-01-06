@@ -1,6 +1,6 @@
 #!/bin/bash
-# test_04_revoked
-# Test #4: Revoked Certificate with CRL Check
+# test_04_revoked - Revoked Certificate with CRL Check
+# Expected: error code 23 (The certificate has been revoked)
 
 openssl s_client -connect localhost:4443 \
   -servername revoked.example.com \
@@ -9,13 +9,3 @@ openssl s_client -connect localhost:4443 \
   -crl_check_all \
   -brief \
   <<< "Q" 2>&1
-
-EXIT_CODE=$?
-
-# Expected: exit code non-zero (verification failure for revoked cert)
-if [ $EXIT_CODE -ne 0 ]; then
-  exit 0  # PASS: Revoked certificate was rejected
-else
-  echo "Description: Revoked certificate was incorrectly ACCEPTED"
-  exit 1  # FAIL
-fi

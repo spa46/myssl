@@ -1,40 +1,11 @@
 #!/bin/bash
-# test_03_expired
-# Test #3: Expired Certificate
+# test_03_expired - Expired Certificate
+# Expected: error code 10 (Certificate has expired)
 
-# Source error codes
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-source "$SCRIPT_DIR/err_code"
-
-cmd=$(openssl s_client -connect localhost:4443 \
+openssl s_client -connect localhost:4443 \
   -servername expired.example.com \
   -CAfile ca-chain.pem \
   -verify_return_error \
   -brief \
-  <<< "Q" 2>&1)
-
-EXIT_CODE=$?
-
-# Extract error number from output
-ERROR_NUM=$(echo "$cmd" | grep -oE "verify error:num=[0-9]+" | grep -oE "[0-9]+" | head -1)
-
-# Expected: error code 10 (Certificate has expired)
-EXPECTED_ERROR=10
-
-if [ "$ERROR_NUM" = "$EXPECTED_ERROR" ]; then
-  echo "Expected Error Code: $EXPECTED_ERROR - ${ERROR_CODES[$EXPECTED_ERROR]}"
-  echo "Detected Error Code: $ERROR_NUM - ${ERROR_CODES[$ERROR_NUM]}"
-  echo "$cmd" | grep -E "verify error|depth="
-  exit 0  # PASS: Expired certificate was correctly detected
-else
-  echo "Description: Expected error code $EXPECTED_ERROR (${ERROR_CODES[$EXPECTED_ERROR]}) was not detected"
-  if [ -n "$ERROR_NUM" ]; then
-    echo "Actual Error Code: $ERROR_NUM - ${ERROR_CODES[$ERROR_NUM]}"
-  else
-    echo "No error code found in output"
-  fi
-  echo "Exit code: $EXIT_CODE"
-  echo "$cmd" | grep -E "verify error|Verification|Connection"
-  exit 1  # FAIL
-fi
+  <<< "Q" 2>&1
 

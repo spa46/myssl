@@ -8,6 +8,7 @@ import sys
 import subprocess
 import glob
 import argparse
+import re
 from pathlib import Path
 
 # Colors
@@ -18,6 +19,26 @@ BLUE = '\033[1;36m'  # Bright Cyan
 NC = '\033[0m'  # No Color
 
 TERMINAL_WIDTH = 80
+
+# Load error codes
+ERROR_CODES = {}
+def load_error_codes():
+    """Load error codes from err_code file"""
+    global ERROR_CODES
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    err_code_file = os.path.join(script_dir, 'err_code')
+    
+    try:
+        with open(err_code_file, 'r') as f:
+            content = f.read()
+            # Parse error codes from bash array format
+            matches = re.findall(r'\[(\d+)\]="([^"]+)"', content)
+            for code, desc in matches:
+                ERROR_CODES[int(code)] = desc
+    except Exception as e:
+        print(f"{YELLOW}Warning: Could not load error codes: {e}{NC}")
+
+load_error_codes()
 
 
 def get_test_name(filepath):
@@ -69,9 +90,48 @@ def extract_commands(test_file):
     return commands
 
 
+def get_expected_error_code(test_file):
+    """Extract expected error code from test file comment"""
+    try:
+        with open(test_file, 'r') as f:
+            for line in f:
+                # Look for "Expected: error code X" in comments
+                match = re.search(r'#.*Expected:\s*error\s*code\s*(\d+)', line, re.IGNORECASE)
+                if match:
+                    return int(match.group(1))
+    except Exception:
+        pass
+    return None
+
+
+def extract_error_codes(output):
+    """Extract all unique error codes from openssl output"""
+    error_codes = []
+    
+    # Look for all "verify error:num=X" occurrences
+    matches = re.findall(r'verify error:num=(\d+)', output)
+    for match in matches:
+        code = int(match)
+        if code not in error_codes:
+            error_codes.append(code)
+    
+    # If no verify errors found, check for "Verify return code: X"
+    if not error_codes:
+        match = re.search(r'Verify return code:\s*(\d+)', output)
+        if match:
+            error_codes.append(int(match.group(1)))
+    
+    # If still nothing, check for "Verification: OK" (error code 0)
+    if not error_codes and re.search(r'Verification:\s*OK', output, re.IGNORECASE):
+        error_codes.append(0)
+    
+    return error_codes if error_codes else None
+
+
 def run_test(test_file, detail=False, show_commands=False):
     """Run a single test file and return result"""
     test_name = get_test_name(test_file)
+    expected_error = get_expected_error_code(test_file)
     
     try:
         # Run the test script
@@ -82,18 +142,61 @@ def run_test(test_file, detail=False, show_commands=False):
             timeout=30
         )
         
-        # Check if test passed (exit code 0)
-        if result.returncode == 0:
+        # Extract actual error codes from output (can be multiple)
+        actual_errors = extract_error_codes(result.stdout)
+        
+        # Determine if test passed
+        test_passed = False
+        if expected_error is not None:
+            # We have an expected error code, check if it's in the list of actual errors
+            if actual_errors:
+                test_passed = (expected_error in actual_errors)
+            else:
+                test_passed = False
+        else:
+            # No expected error specified, use exit code
+            test_passed = (result.returncode == 0)
+        
+        # Format actual errors for display
+        actual_error_str = None
+        if actual_errors:
+            error_descriptions = []
+            for code in actual_errors:
+                if code in ERROR_CODES:
+                    error_descriptions.append(f"{code} - {ERROR_CODES[code]}")
+                else:
+                    error_descriptions.append(str(code))
+            actual_error_str = ", ".join([str(c) for c in actual_errors])
+            actual_error_desc = " | ".join(error_descriptions)
+        
+        # Print result
+        if test_passed:
             # PASS
             print(f"{test_name:<{TERMINAL_WIDTH-6}}{GREEN}[PASS]{NC}")
             if show_commands:
                 commands = extract_commands(test_file)
                 for cmd in commands:
-                    print(f"    {cmd}", end='\n\n')
-            if detail and result.stdout:
-                for line in result.stdout.strip().split('\n'):
-                    if line.strip():
-                        print(f"    {line}")
+                    print(f"    {cmd}")
+            if detail:
+                if expected_error is not None and expected_error in ERROR_CODES:
+                    print(f"    Expected: {expected_error} - {ERROR_CODES[expected_error]}")
+                if actual_errors:
+                    # Print first error on same line, rest indented
+                    for i, code in enumerate(actual_errors):
+                        if code in ERROR_CODES:
+                            desc = ERROR_CODES[code]
+                        else:
+                            desc = "Unknown error"
+                        if i == 0:
+                            print(f"    Actual Error: {code} - {desc}")
+                        else:
+                            print(f"                  {code} - {desc}")
+                
+                print('')    
+                if result.stdout:
+                    for line in result.stdout.strip().split('\n')[:10]:  # Limit to first 10 lines
+                        if line.strip() and ('verify' in line.lower() or 'depth=' in line):
+                            print(f"    {line}")
             return True
         else:
             # FAIL
@@ -102,17 +205,41 @@ def run_test(test_file, detail=False, show_commands=False):
                 commands = extract_commands(test_file)
                 for cmd in commands:
                     print(f"    {cmd}")
-            # Print failure details with indent
+            
+            # Print error information
+            if expected_error is not None:
+                if expected_error in ERROR_CODES:
+                    print(f"    Expected Error: {expected_error} - {ERROR_CODES[expected_error]}")
+                else:
+                    print(f"    Expected Error Code: {expected_error}")
+                    
+            if actual_errors:
+                # Print first error on same line, rest indented
+                for i, code in enumerate(actual_errors):
+                    if code in ERROR_CODES:
+                        desc = ERROR_CODES[code]
+                    else:
+                        desc = "Unknown error"
+                    if i == 0:
+                        print(f"    Actual Error: {code} - {desc}")
+                    else:
+                        print(f"                  {code} - {desc}")
+            else:
+                print(f"    No error code found in output")
+                print(f"    Exit code: {result.returncode}")
+            
+            # Print relevant output lines
             if result.stdout:
-                for line in result.stdout.strip().split('\n'):
-                    if line.strip():
+                for line in result.stdout.strip().split('\n')[:15]:
+                    if line.strip() and ('verify' in line.lower() or 'error' in line.lower() or 'depth=' in line):
                         print(f"    {line}")
+            
             if result.stderr:
-                for line in result.stderr.strip().split('\n'):
+                for line in result.stderr.strip().split('\n')[:10]:
                     if line.strip():
                         print(f"    {line}")
             return False
-            
+        
     except subprocess.TimeoutExpired:
         print(f"{test_name:<{TERMINAL_WIDTH-6}}{RED}[FAIL]{NC}")
         print(f"    Description: Test timeout (30s)")
